@@ -1,0 +1,129 @@
+package com.example.basuheroapplication;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.Button;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.type.DateTime;
+
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+public class status_calbaryo extends AppCompatActivity {
+
+
+    Calendar calendar;
+    SimpleDateFormat simpleDateFormat;
+    String Date, ID;
+    TextView GetDateAndTime;
+
+    Button btnGetDateAndTime;
+
+
+    FirebaseAuth firebaseAuth;
+    FirebaseDatabase firebaseDatabase;
+    FirebaseFirestore firestore;
+    DatabaseReference databaseReference, databaseName;
+    Task<DocumentSnapshot> Firestore;
+
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.status_page_calbaryo);
+
+        firestore = firestore.getInstance();
+        firebaseDatabase = firebaseDatabase.getInstance();
+        firebaseAuth = firebaseAuth.getInstance();
+
+        databaseReference = firebaseDatabase.getInstance().getReference("CollectionInfo").child("DateAndTime");
+        ID = firebaseAuth.getCurrentUser().getUid();
+        DatabaseReference databaseReferencename = firebaseDatabase.getInstance().getReference("Users").child("FullName");
+        databaseName = firebaseDatabase.getInstance().getReference("CollectionInfo").child("FullName");
+
+
+
+
+
+        GetDateAndTime = findViewById(R.id.getTimeAndDate);
+        btnGetDateAndTime = findViewById(R.id.btnCollect);
+
+        calendar = Calendar.getInstance();
+        simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+
+        Date = simpleDateFormat.format(calendar.getTime());
+
+        btnGetDateAndTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                firestore.collection("Users").get().isSuccessful();
+
+
+                GetDateAndTime.setText(Date);
+
+
+                String dateandtime = DateFormat.getDateTimeInstance().format(calendar.getTime());
+                String userID = firebaseAuth.getCurrentUser().getEmail();
+                String userName = databaseReferencename.get().toString();
+
+                DocumentReference df = firestore.collection("CollectionInfo").document(userID);
+                DocumentReference uName = firestore.collection("Users").document(userID);
+                Map<String, Object> collectionInfo = new HashMap<>();
+
+                Firestore = FirebaseFirestore.getInstance().collection("Users").document("FullName").get();
+                uName.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful()) {
+
+                            DocumentSnapshot document = task.getResult();
+
+                            //Registers the name of the collector
+                            collectionInfo.put("FullName", uName);
+
+                            //date and time of collection
+                            collectionInfo.put("Date and Time", dateandtime.toString());
+
+
+                            df.set(collectionInfo);
+
+                        }
+                    }
+
+                });
+            }
+        });
+    }
+}
+
+
+
+
+
+
+
+
+
